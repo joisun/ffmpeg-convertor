@@ -20,6 +20,15 @@ export default function VideoClipper({
   const [range, setRange] = useState([0, 0]);
   const [startPoint, setStartPoint] = useState("");// 时间 tag
   const [endPoint, setEndPoint] = useState("");
+
+  // const [startTime, setStartTime] = useState(0);// 时间 tag
+  // const [endTime, setEndTime] = useState(0);
+  // xTimeRef 用于解决 useEffect 闭包陷阱
+  const startTimeRef = useRef(0);
+  const endTimeRef = useRef(0);
+  const setStartTime = (val: number)=>{startTimeRef.current = val}
+  const setEndTime = (val: number)=>{endTimeRef.current = val}
+
   const [volumVisible, setVolumVisible] = useState(false);
   const [duration, setDuration] = useState(0)
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -34,20 +43,33 @@ export default function VideoClipper({
       setStartPoint(secondsToTime(0))
       setEndPoint(secondsToTime(duration))
       setDuration(duration)
+      setStartTime(0)
+      setEndTime(duration)
     }
 
     // 同步播放按钮
     const handlePlay = () => setPlay(true);
     const handlePause = () => setPlay(false);
+    // 自动循环播放， 让视频始终在指定范围内重复播放
+    const handleTimeupdate = ()=>{
+      if(videoRef.current && videoRef.current.currentTime > endTimeRef.current){
+        playAtFromRangeStart()
+      }
+    }
 
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
     video.addEventListener("loadedmetadata", handleLoadedmetadata)
+    video.addEventListener("timeupdate", handleTimeupdate)
+
+ 
 
     return () => {
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("loadedmetadata", handleLoadedmetadata)
+      video.removeEventListener("timeupdate", handleTimeupdate)
+
 
     };
   }, []);
@@ -62,12 +84,19 @@ export default function VideoClipper({
   };
   const handleChange = (isStart: boolean, e: number, percentage: number) => {
     updateRange(isStart, e);
-    const currentTime = duration * (percentage / 100)
-    const time = secondsToTime(currentTime);
-    isStart ? setStartPoint(time) : setEndPoint(time);
+    const newTime = duration * percentage
+    const formatedTimeStr = secondsToTime(newTime);
+    
+    // xTimeRef 用于解决 useEffect 闭包陷阱
+    isStart ? startTimeRef.current = newTime : endTimeRef.current = newTime;
+    isStart ? setStartTime(newTime) : setEndTime(newTime);
+
+    isStart ? setStartPoint(formatedTimeStr) : setEndPoint(formatedTimeStr);
+
+
 
     onClipChange(startPoint, endPoint);
-    throttledPlayAt(currentTime);
+    throttledPlay();
   };
 
   const handlePlay = function () {
@@ -80,13 +109,13 @@ export default function VideoClipper({
   };
 
   // 设定播放时间点并播放
-  const playAt = (at: number) => {
+  const playAtFromRangeStart = () => {
     if (videoRef.current) {
-      videoRef.current.currentTime = at;
+      videoRef.current.currentTime = startTimeRef.current;
       videoRef.current.play();
     }
   };
-  const throttledPlayAt = throttle(playAt, 100);
+  const throttledPlay = throttle(playAtFromRangeStart, 100);
 
   return (
     <div className="relative w-full max-w-[800px] mx-auto">

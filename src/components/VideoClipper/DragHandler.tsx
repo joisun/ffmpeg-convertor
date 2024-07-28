@@ -99,7 +99,7 @@ export default function DragHandler({
       setPosition(dragDeltaX);
       onPositionChange(
         dragDeltaX,
-        Math.round((dragDeltaX / parentElementWidth) * 100)
+        dragDeltaX / parentElementWidth
       );
     }
   };
