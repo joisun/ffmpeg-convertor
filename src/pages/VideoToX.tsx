@@ -22,7 +22,18 @@ const formSchema = z.object({
       message: "压缩级别必须小于100.",
     })
     .gte(0, { message: "压缩级别必须大于0." }),
-
+  output: z.string()
+    .min(1, { message: "文件名不能为空" })
+    .max(50, { message: "文件名长度不能超过50个字符" })
+    .regex(/^[a-zA-Z0-9_-]+$/, {
+      message: "文件名只能包含字母、数字、下划线和连字符"
+    })
+    .refine((name) => !name.startsWith('-'), {
+      message: "文件名不能以连字符开头"
+    })
+    .refine((name) => !name.endsWith('-'), {
+      message: "文件名不能以连字符结尾"
+    }),
   select: z.coerce.number(),
   pix_fmt: z.string().optional(),
   filetype: z.string(),
@@ -43,16 +54,13 @@ import BiteRateSelector from "@/components/bit-rate-selector";
 import { Slider } from "@/components/ui/slider";
 import ColorSpaceSelector from "@/components/color-space-selector";
 import { CommandPartsType, generateFFmpegCommand } from "@/lib/utils";
-import { ReactElement, SVGProps, useEffect, useRef, useState } from "react";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import FileTypeSelector from "@/components/file-type-selector";
 import Dropzone from "@/components/DropZone";
 import VideoClipper from "@/components/VideoClipper";
 import { Separator } from "@radix-ui/react-separator";
 import { useToast } from "@/components/ui/use-toast";
-import NoSafariSupport from "@/components/no-safari-support";
 import { useFFmpeg } from "@/lib/FFmpeg.wasm";
-import DemoFFmpeg from "@/components/DemoFFmpeg";
 import { HugeiconsLoading03, MingcuteCloseFill } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
@@ -71,6 +79,7 @@ export default function ProfileForm() {
       select: 1,
       pix_fmt: "yuv420p",
       filetype: "mp4",
+      output: 'output'
     },
   });
   const [command, setCommand] = useState("");
@@ -298,6 +307,22 @@ export default function ProfileForm() {
               </FormItem>
             )}
           />
+
+
+          <FormField
+            control={form.control}
+            name="output"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>文件名</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="output" {...field} />
+                </FormControl>
+                <FormMessage />
+
+              </FormItem>
+            )}
+          />
         </form>
       </Form>
       <Separator className="bg-border h-[1px] mt-8 mb-4" />
@@ -316,7 +341,7 @@ export default function ProfileForm() {
         生成指令并开始转换 {ffmpeg.isDoing && <HugeiconsLoading03 className="animate-spin ml-2 inline-block" />}
       </Button>
 
-   
+
 
       <span className="ml-4 text-gray-500 inline-flex items-center text-xs">FFmpeg.wasm {ffmpeg.isLoading && <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div>} {ffmpeg.isLoaded && <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}</span>
 
@@ -360,7 +385,7 @@ export default function ProfileForm() {
       <Alert className="text-border my-4">
         <AlertTitle className="text-border">No Safari Support !</AlertTitle>
         <AlertDescription>
-        Sorry that there is might no support for some browser like safari right now.
+          Sorry that there is might no support for some browser like safari right now.
         </AlertDescription>
       </Alert>
     </>
