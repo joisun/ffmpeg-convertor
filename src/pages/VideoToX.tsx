@@ -63,8 +63,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { useFFmpeg } from "@/lib/FFmpeg.wasm";
 import { HugeiconsLoading03, MingcuteCloseFill } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import { ExclamationTriangleIcon, QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ProfileForm() {
   // 1. Define your form.
@@ -343,7 +344,25 @@ export default function ProfileForm() {
 
 
 
-      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">FFmpeg.wasm {ffmpeg.isLoading && <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div>} {ffmpeg.isLoaded && <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}</span>
+      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">FFmpeg.wasm {ffmpeg.isLoading ? <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div> : <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}</span>
+
+      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">多线程支持 {!ffmpeg.openMT ? <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div> : <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}
+        <TooltipProvider >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <QuestionMarkCircledIcon className="ml-2 hover:text-gray-300 cursor-pointer" />
+            </TooltipTrigger>
+            <TooltipContent className="bg-background border text-primary w-60 p-4">
+              <h2 className="font-semibold mb-1">
+                多线程将会带来更快的处理速度
+              </h2>
+              <p>
+              本项目FFmpeg 核心使用的是 <a className="underline underline-offset-4 break-keep" target="_blank" href="https://ffmpegwasm.netlify.app/">FFmpeg.wasm</a>. 目前多线程似乎不支持基于 Chromium 的浏览器。 经测试，FireFox 可以很好的支持。 因此在 FireFox 浏览器中多线程能力是开启的。 
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </span>
 
 
       <div className="my-4 h-1 flex items-center gap-4">
@@ -363,7 +382,7 @@ export default function ProfileForm() {
       {
         ffmpeg.logs.length !== 0 &&
         <Alert className="my-4">
-          <AlertTitle>Logs:{ffmpeg.logs.length}</AlertTitle>
+          <AlertTitle>Logs</AlertTitle>
           <AlertDescription>
             {ffmpeg.logs.map((i, index) => {
               return <pre key={index} className="mt-4 whitespace-normal">{i}</pre>

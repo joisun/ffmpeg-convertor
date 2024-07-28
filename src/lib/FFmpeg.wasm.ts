@@ -1,3 +1,4 @@
+import Bowser from "bowser"
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -14,6 +15,7 @@ interface FFmpegInstance {
     transcodedTime: number;
     logs: string[];
     error: Error | null;
+    openMT:boolean
 }
 
 export function useFFmpeg(): FFmpegInstance {
@@ -24,6 +26,7 @@ export function useFFmpeg(): FFmpegInstance {
     const [error, setError] = useState<Error | null>(null);
     const [progress, setProgress] = useState(0)
     const [transcodedTime, setTranscodedTime] = useState(0)
+    const [openMT, serOpenMT] = useState(false)
     // const [logs, setLogs] = useState<string[]>([]);
 
     const { logs, updateLogs } = useLogManager()
@@ -68,9 +71,19 @@ export function useFFmpeg(): FFmpegInstance {
                 setTranscodedTime(() => time / 1000000)
             });
 
+            // 基于chromium 的浏览器目前不支持 多线程 (不知道为什么， 可以在这里看到官方的 playgroud 是定义了两个CDN 常量 https://github.com/ffmpegwasm/ffmpeg.wasm/blob/main/apps/website/src/components/Playground/const.ts)
+            const browser = Bowser.getParser(window.navigator.userAgent);
+            let OpenMT = false
+            if (browser.getBrowser().name === 'Firefox') {
+                OpenMT = true;
+            }
+            serOpenMT(OpenMT)
             // const baseURL = 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm';
-            const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm';
-            
+            // const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm'; // jsdelivr 好像开启了必须要的header设定项，否则由于安全策略（同源），只能自己server这个包
+            const CORE_URL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm'
+            const CORE_MT_URL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm'
+            const baseURL = OpenMT ? CORE_MT_URL : CORE_URL;
+
             // console.log('7. Fetching core URL');
             // const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
             // console.log('8. Core URL fetched');
@@ -84,11 +97,16 @@ export function useFFmpeg(): FFmpegInstance {
             await ffmpegRef.current.load({
                 coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
                 wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-                workerURL: await toBlobURL(
-                    `${baseURL}/ffmpeg-core.worker.js`,
-                    "text/javascript"
-                ),
+                ...(OpenMT ? {
+                    workerURL: await toBlobURL(
+                        `${baseURL}/ffmpeg-core.worker.js`,
+                        "text/javascript"
+                    ),
+                } : {})
+
             });
+            console.log('OpenMT: 是否开启多线程？', OpenMT)
+
             console.log('12. FFmpeg loaded successfully');
 
             setIsLoaded(true);
@@ -121,7 +139,7 @@ export function useFFmpeg(): FFmpegInstance {
         }
     }, [isLoaded]);
 
-   
+
 
     useEffect(() => {
         load();
@@ -136,7 +154,8 @@ export function useFFmpeg(): FFmpegInstance {
         progress,
         transcodedTime,
         logs,
-        error
+        error,
+        openMT
     };
 }
 
