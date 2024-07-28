@@ -1,4 +1,5 @@
 import React, { ReactElement, useEffect, useRef, useState } from "react";
+import { MaterialSymbolsDragIndicator } from "../icons";
 
 export enum HandlerEnum {
   START = "start",
@@ -30,7 +31,7 @@ export default function DragHandler({
       const initPosition =
         type === HandlerEnum.START
           ? 0
-          : parentElementWidth - (refHandler.current?.offsetWidth || 0);
+          : parentElementWidth 
       setPosition(initPosition);
       initRange(type === HandlerEnum.START, initPosition);
     }
@@ -107,9 +108,10 @@ export default function DragHandler({
       ref={refHandler}
       onMouseDown={(e) => handleMouseDown(e)}
       style={{ left: position }}
-      className="left-handler z-20 h-[130%] w-4 rounded-2xl bg-white/80 absolute cursor-pointer"
+      className="left-handler z-20 h-[150%] w-4 -translate-x-1/2  rounded-full bg-white absolute cursor-pointer flex justify-center items-center"
     >
-      <span className="absolute -bottom-4 font-extralight select-none text-xs left-1/2 -translate-x-1/2">
+      <MaterialSymbolsDragIndicator className="text-black text-2xl"/>
+      <span className="absolute -bottom-4 font-extralight select-none text-xs scale-75 left-1/2 -translate-x-1/2">
         {children}
       </span>
     </div>

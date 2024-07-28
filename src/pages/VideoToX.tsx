@@ -79,7 +79,6 @@ export default function ProfileForm() {
   const [videoSrc, setVideoSrc] = useState("")
   const { toast } = useToast();
   const ffmpeg = useFFmpeg();
-  const [result, setResult] = useState<Uint8Array | null>(null);
 
   const handleVideoClipperChange = (startPoint: string, endPoint: string) => {
     if (startPoint && endPoint) {
@@ -100,8 +99,7 @@ export default function ProfileForm() {
     }
 
     try {
-      const data = await ffmpeg.transcode(file, commandParts);
-      setResult(data);
+      await ffmpeg.transcode(file, commandParts);
       console.log('Transcoding completed');
     } catch (error) {
       console.error('Transcoding failed:', error);
@@ -126,8 +124,7 @@ export default function ProfileForm() {
       });
       return;
     }
-    const result = await handleTranscode(files[0], commandParts)
-    console.log('result', result)
+    await handleTranscode(files[0], commandParts)
   }
 
   return (
@@ -155,7 +152,7 @@ export default function ProfileForm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(() => onSubmit(form.getValues(), false))}
-          className="grid w-full  lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-4 gap-y-4"
+          className="sm:grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-4 gap-y-4"
         >
           <FormField
             control={form.control}
@@ -319,11 +316,13 @@ export default function ProfileForm() {
         生成指令并开始转换 {ffmpeg.isDoing && <HugeiconsLoading03 className="animate-spin ml-2 inline-block" />}
       </Button>
 
+   
+
       <span className="ml-4 text-gray-500 inline-flex items-center text-xs">FFmpeg.wasm {ffmpeg.isLoading && <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div>} {ffmpeg.isLoaded && <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}</span>
 
 
       <div className="my-4 h-1 flex items-center gap-4">
-        {ffmpeg.progress !== 0 && <> <Progress value={ffmpeg.progress} className="my-4 h-1" /> <span className="text-xs shrink-0">{Math.floor(ffmpeg.transcodedTime)} s</span></>}
+        {ffmpeg.progress !== 0 && <> <Progress value={ffmpeg.progress} className="my-4 mx-4 h-1" /> <span className="text-xs shrink-0 inline-block w-12 text-right">{Math.floor(ffmpeg.transcodedTime)} s</span></>}
       </div>
 
       {ffmpeg.error &&
@@ -361,7 +360,7 @@ export default function ProfileForm() {
       <Alert className="text-border my-4">
         <AlertTitle className="text-border">No Safari Support !</AlertTitle>
         <AlertDescription>
-          Sorry that there is no support for safari, since this project is powered by <a target="_blank" className="underline underline-offset-4" href="https://github.com/diffusion-studio/ffmpeg-js">@diffusion-studio/ffmpeg-js</a>
+        Sorry that there is might no support for some browser like safari right now.
         </AlertDescription>
       </Alert>
     </>

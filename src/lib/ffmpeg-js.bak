@@ -1,5 +1,3 @@
-import { FFmpeg } from '@diffusion-studio/ffmpeg-js';
-import { CommandPartsType } from './utils';
 
 export const useFFmpeg = () => {
     const ffmpeg = new FFmpeg();
@@ -26,34 +24,6 @@ const readFile = async (file: File) => {
             }
         }
     })
-}
-
-export const execute = async (file: string, commandParts: CommandPartsType) => {
-    // const blob = await readFile(file);
-    // if (!blob) return;
-
-    const ffmpeg = new FFmpeg();
-
-    // write to file system
-    await ffmpeg.writeFile(commandParts.input, file);
-
-    // convert mp4 to avi
-    await ffmpeg.exec(commandParts.executeParts);
-
-    // read from file system
-    const result: Uint8Array = ffmpeg.readFile(commandParts.output);
-
-    downloadData(result, commandParts.output)
-
-    // free memory
-    ffmpeg.deleteFile(commandParts.input);
-    ffmpeg.deleteFile(commandParts.output);
-    // const result: Uint8Array = ffmpeg.exec(commandParts).export()
-
-    //   const result: Uint8Array | undefined = await ffmpeg
-    //     .input({ source: blob })
-    //     .ouput({ format: 'avi' })
-    //     .export()
 }
 
 const downloadData = (file: Uint8Array, filename: string) => {

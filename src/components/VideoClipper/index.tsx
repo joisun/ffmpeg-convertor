@@ -82,7 +82,6 @@ export default function VideoClipper({
   // 设定播放时间点并播放
   const playAt = (at: number) => {
     if (videoRef.current) {
-      console.log('at',at)
       videoRef.current.currentTime = at;
       videoRef.current.play();
     }
@@ -90,7 +89,7 @@ export default function VideoClipper({
   const throttledPlayAt = throttle(playAt, 100);
 
   return (
-    <div className="relative w-full max-w-[1000px] mx-auto">
+    <div className="relative w-full max-w-[800px] mx-auto">
       <video
         onError={(e) => console.error("Video error:", e)}
         onPlay={() => console.log("Video started playing")}
@@ -99,14 +98,14 @@ export default function VideoClipper({
         className="relative w-full"
         {...props}
       ></video>
-      <div className="absolute flex gap-4 px-4 justify-between items-center z-20 bottom-12 left-1/2 rounded-2xl  backdrop-blur-2xl  -translate-x-1/2 z-1000 controller h-20 w-11/12 bg-black/60">
+      <div className="absolute flex gap-4 px-4 justify-between items-center z-20 bottom-12 left-1/2 rounded-2xl  backdrop-blur-2xl  -translate-x-1/2 z-1000 controller h-14 w-11/12 bg-black/40">
         <button
-          className="text-4xl hover:scale-110 transition-all"
+          className="text-4xl"
           onClick={handlePlay}
         >
           {play ? <IcRoundPause /> : <IcRoundPlayArrow />}
         </button>
-        <div className="con-bar flex-1 bg-black/60 rounded-2xl backdrop-blur-3xl h-8 relative flex items-center transition-all">
+        <div className="con-bar flex-1 bg-white/20 rounded-2xl backdrop-blur-3xl h-4 relative flex items-center transition-all">
           <DragHandler
             initRange={initRange}
             onPositionChange={(e, p) => handleChange(true, e, p)}
@@ -127,7 +126,7 @@ export default function VideoClipper({
           ></div>
         </div>
         <button
-          className="text-3xl hover:scale-110 transition-all ml-4"
+          className="text-3xl "
           onClick={() => setVolumVisible(!volumVisible)}
         >
           <MaterialSymbolsVolumeUp />
@@ -139,7 +138,7 @@ export default function VideoClipper({
               "absolute -right-14 -top-0 -rotate-90 transition-all w-20 ",
               "appearance-none bg-transparent",
               "[&::-webkit-slider-runnable-track]:rounded-full",
-              " [&::-webkit-slider-runnable-track]:bg-black/60",
+              " [&::-webkit-slider-runnable-track]:bg-black/80",
               " [&::-webkit-slider-runnable-track]:backdrop-blur-2xl",
               "[&::-webkit-slider-thumb]:appearance-none ",
               "[&::-webkit-slider-thumb]:h-4 ",
@@ -159,3 +158,6 @@ export default function VideoClipper({
     </div>
   );
 }
+
+
+

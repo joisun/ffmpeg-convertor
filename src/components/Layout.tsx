@@ -22,14 +22,14 @@ interface SettingsLayoutProps {
 // { children }: SettingsLayoutProps
 export default function Layout() {
   return (
-    <div className={cn("px-12 py-4")}>
+    <div className={cn("px-4 sm:px-12 py-4")}>
       <Header />
       <Separator className="my-6 bg-border h-[1px]" />
       <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-        <aside className="-mx-4 lg:w-1/5 ">
+        <aside className="lg:w-1/6">
           <SidebarNav items={sidebarNavItems} />
         </aside>
-        <div className="flex-1 w-full container">
+        <div className="flex-1 w-full sm:container">
           <Outlet />
         </div>
       </div>
