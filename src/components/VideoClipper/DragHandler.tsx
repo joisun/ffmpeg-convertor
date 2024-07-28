@@ -1,5 +1,6 @@
 import React, { ReactElement, useEffect, useRef, useState } from "react";
 import { MaterialSymbolsDragIndicator } from "../icons";
+import { cn } from "@/lib/utils";
 
 export enum HandlerEnum {
   START = "start",
@@ -87,11 +88,11 @@ export default function DragHandler({
 
     if (type === HandlerEnum.START) {// 左边手柄
       maxX =
-        anotherHandler?.offsetLeft! - offset - handlerWidth || default_maxX;
+        anotherHandler?.offsetLeft!
       minX = parentElementX - startPosition + offset;
     } else {// 右边手柄
       maxX = parentElementWidth;
-      minX = anotherHandler?.offsetLeft! + offset || default_minX;
+      minX = anotherHandler?.offsetLeft!;
     }
 
     if (dragDeltaX > minX && dragDeltaX < maxX) {
@@ -111,7 +112,7 @@ export default function DragHandler({
       className="left-handler z-20 h-[150%] w-4 -translate-x-1/2  rounded-full bg-white absolute cursor-pointer flex justify-center items-center"
     >
       <MaterialSymbolsDragIndicator className="text-black text-2xl"/>
-      <span className="absolute -bottom-4 font-extralight select-none text-xs scale-75 left-1/2 -translate-x-1/2">
+      <span className={cn("absolute  font-extralight select-none text-xs scale-75 left-1/2 -translate-x-1/2", type === HandlerEnum.START ? '-bottom-4' : '-top-4')}>
         {children}
       </span>
     </div>
