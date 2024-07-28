@@ -80,7 +80,7 @@ export default function ProfileForm() {
       select: 1,
       pix_fmt: "yuv420p",
       filetype: "mp4",
-      output: 'output'
+      output: 'output',
     },
   });
   const [command, setCommand] = useState("");
@@ -123,6 +123,7 @@ export default function ProfileForm() {
     const { command, commandParts } = generateFFmpegCommand({
       ...values,
       timeRange,
+      input:files[0].name
     });
     setCommand(command);
     if (onlyGenerateCommand) return;

@@ -52,6 +52,7 @@ export default function VideoClipper({
     const handlePause = () => setPlay(false);
     // 自动循环播放， 让视频始终在指定范围内重复播放
     const handleTimeupdate = ()=>{
+      // ! 注意：这里的回调触发频率是没有特别高的， 可能会导致听感的时间间隔和实际导出的参数设定有一秒左右的误差， 如果需要非常精确， 可以使用 requestAniamtion
       if(videoRef.current && videoRef.current.currentTime > endTimeRef.current){
         playAtFromRangeStart()
       }
@@ -95,7 +96,9 @@ export default function VideoClipper({
 
 
 
-    onClipChange(startPoint, endPoint);
+    // 起始时刻 + 持续时间
+    const lastingTime = endTimeRef.current - startTimeRef.current
+    onClipChange(startPoint, secondsToTime(lastingTime));
     throttledPlay();
   };
 
