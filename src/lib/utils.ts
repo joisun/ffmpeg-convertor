@@ -67,14 +67,14 @@ export const generateFFmpegCommand: GenerateFFmpegCommandType = function (params
     `-crf ${options.compression}`,
     `-r ${options.fps}`,
     options.loop !== 0 ? `-loop ${options.loop}` : '',
-    `-vf select='not(mod(n,${options.select}))',scale=${options.width}:-1`,
+    `-vf select="'not(mod(n,${options.select}))',scale=${options.width}:-1"`,
     `-pix_fmt ${options.pix_fmt}`,
     `${options.output}.${options.filetype}`
   ];
 
   const commandStr = commandParts.filter(part => part !== '').join(' ')
   
-  const _execute_parts = commandStr.split(' ').filter(i=>!!i)
+  const _execute_parts = commandStr.replaceAll('"','').split(' ').filter(i=>!!i)
   _execute_parts.shift()
   return {
     command: commandStr, commandParts: {
