@@ -53,7 +53,7 @@ import { Input } from "@/components/ui/input";
 import BiteRateSelector from "@/components/bit-rate-selector";
 import { Slider } from "@/components/ui/slider";
 import ColorSpaceSelector from "@/components/color-space-selector";
-import { CommandPartsType, generateFFmpegCommand } from "@/lib/utils";
+import { CommandPartsType, generateFFmpegCommand, sanitizeFilename } from "@/lib/utils";
 import { useState } from "react";
 import FileTypeSelector from "@/components/file-type-selector";
 import Dropzone from "@/components/DropZone";
@@ -123,7 +123,7 @@ export default function ProfileForm() {
     const { command, commandParts } = generateFFmpegCommand({
       ...values,
       timeRange,
-      input:files[0].name
+      input:sanitizeFilename(files[0].name)
     });
     setCommand(command);
     if (onlyGenerateCommand) return;

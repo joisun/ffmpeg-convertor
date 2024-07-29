@@ -113,3 +113,19 @@ export function throttle<T extends (...args: any[]) => any>(
     }
   };
 }
+
+export function sanitizeFilename(filename:string) {
+  // 分离文件名和扩展名
+  const parts = filename.split('.');
+  let name = parts.slice(0, -1).join('.');
+  const extension = parts.length > 1 ? parts[parts.length - 1] : '';
+
+  // 定义正则表达式，匹配合法字符（中文字符、英文字符、数字、中划线、下划线）
+  const pattern = /[^\u4e00-\u9fa5a-zA-Z0-9-_]/g;
+  
+  // 替换非法字符为空字符串
+  name = name.replace(pattern, '');
+
+  // 拼接合法文件名和扩展名
+  return extension ? `${name}.${extension}` : name;
+}
