@@ -4,9 +4,7 @@
 
 ## How to use ?
 
-demo 演示 [bilibili](https://www.bilibili.com/video/BV1KMvTe5ExN/?share_source=copy_web&vd_source=534796ceeed8cbf786fbf5ec32abc7a0)。
-
-<iframe width="800" height="500" src="https://www.youtube.com/embed/SDm7EcHQV_k?si=YzCAA3J11ucjNg1R" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+demo 演示 [bilibili](https://www.bilibili.com/video/BV1KMvTe5ExN/?share_source=copy_web&vd_source=534796ceeed8cbf786fbf5ec32abc7a0)， [youtube](https://www.youtube.com/embed/SDm7EcHQV_k).
 
 
 ## TODO
