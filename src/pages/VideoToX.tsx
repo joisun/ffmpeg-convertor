@@ -410,7 +410,6 @@ export default function ProfileForm() {
       </Alert> */}
 
       
-      <img className="opacity-0" align="right" height="1" src="https://count.getloli.com/get/@joisun-ffmpeg-convertor?theme=asoul" alt="Jayce" />
     </>
   );
 }
