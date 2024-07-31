@@ -66,7 +66,7 @@ export const generateFFmpegCommand: GenerateFFmpegCommandType = function (params
     `-b:v ${options.bitrate}`,
     `-crf ${options.compression}`,
     `-r ${options.fps}`,
-    options.loop !== 0 ? `-loop ${options.loop}` : '',
+    `-loop ${options.loop}`,
     `-vf select="'not(mod(n,${options.select}))',scale=${options.width}:-1"`,
     `-pix_fmt ${options.pix_fmt}`,
     `${options.output}.${options.filetype}`
