@@ -123,7 +123,7 @@ export default function ProfileForm() {
     const { command, commandParts } = generateFFmpegCommand({
       ...values,
       timeRange,
-      input:sanitizeFilename(files[0].name)
+      input: sanitizeFilename(files[0].name)
     });
     setCommand(command);
     if (onlyGenerateCommand) return;
@@ -141,6 +141,12 @@ export default function ProfileForm() {
   return (
     <>
       <div className="file mb-8">
+        <Alert className="text-border my-4">
+          <AlertTitle className="text-border">建议在 FireFox 中使用，以开启多线程支持</AlertTitle>
+          <AlertDescription>
+            It is recommended to use Firefox to enable multi-threading
+          </AlertDescription>
+        </Alert>
         {files[0] ? (
           <VideoClipper src={videoSrc} onClipChange={handleVideoClipperChange}>
             <button
@@ -352,7 +358,7 @@ export default function ProfileForm() {
                 多线程将会带来更快的处理速度
               </h2>
               <p>
-              本项目FFmpeg 核心使用的是 <a className="underline underline-offset-4 break-keep" target="_blank" href="https://ffmpegwasm.netlify.app/">FFmpeg.wasm</a>. 目前多线程似乎不支持基于 Chromium 的浏览器。 经测试，FireFox 可以很好的支持。 因此在 FireFox 浏览器中多线程能力是开启的。 
+                本项目FFmpeg 核心使用的是 <a className="underline underline-offset-4 break-keep" target="_blank" href="https://ffmpegwasm.netlify.app/">FFmpeg.wasm</a>. 目前多线程似乎不支持基于 Chromium 的浏览器。 经测试，FireFox 可以很好的支持。 因此在 FireFox 浏览器中多线程能力是开启的。
               </p>
             </TooltipContent>
           </Tooltip>
@@ -395,7 +401,7 @@ export default function ProfileForm() {
         </Alert>
       }
 
-{/* 
+      {/* 
       <Alert className="text-border my-4">
         <AlertTitle className="text-border">No Safari Support !</AlertTitle>
         <AlertDescription>
@@ -403,7 +409,8 @@ export default function ProfileForm() {
         </AlertDescription>
       </Alert> */}
 
-      
+
+
     </>
   );
 }
