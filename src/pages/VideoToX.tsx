@@ -222,9 +222,6 @@ export default function ProfileForm() {
                     defaultValue={field.value}
                   />
                 </FormControl>
-                <FormDescription>
-                  控制输出资源的循环播放次数，0为无限循环
-                </FormDescription>
               </FormItem>
             )}
           />
@@ -247,7 +244,7 @@ export default function ProfileForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  原视频资源的压缩等级，压缩等级越高，输出质量越差，但文件越小
+                  越高，输出质量越差，文件越小, 对 GIF/WEBP 无效
                 </FormDescription>
               </FormItem>
             )}
@@ -270,7 +267,7 @@ export default function ProfileForm() {
                     className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
                   />
                 </FormControl>
-                <FormDescription>间隔抽取帧，合成结果</FormDescription>
+                <FormDescription>间隔抽取帧，合成结果，值越大，输出播放速度越快，文件越小</FormDescription>
               </FormItem>
             )}
           />
@@ -287,9 +284,6 @@ export default function ProfileForm() {
                     defaultValue={field.value}
                   />
                 </FormControl>
-                <FormDescription>
-                  控制输出资源的循环播放次数，0为无限循环
-                </FormDescription>
               </FormItem>
             )}
           />
