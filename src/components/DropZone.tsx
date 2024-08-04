@@ -93,7 +93,7 @@ export default forwardRef(({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <div className="flex items-center justify-center text-muted-foreground border ">
+        <div className="flex items-center justify-center text-muted-foreground">
           <span className="font-medium">Drag Files to Upload or</span>
           <Button
             variant="ghost"

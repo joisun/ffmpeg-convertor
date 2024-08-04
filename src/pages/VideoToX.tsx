@@ -54,7 +54,7 @@ import BiteRateSelector from "@/components/bit-rate-selector";
 import { Slider } from "@/components/ui/slider";
 import ColorSpaceSelector from "@/components/color-space-selector";
 import { CommandPartsType, generateFFmpegCommand, sanitizeFilename } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FileTypeSelector from "@/components/file-type-selector";
 import Dropzone from "@/components/DropZone";
 import VideoClipper from "@/components/VideoClipper";
@@ -68,6 +68,12 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ProfileForm() {
+
+  const [command, setCommand] = useState("");
+  const [timeRange, setTimeRange] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [videoSrc, setVideoSrc] = useState("")
+  const [output, setOutput] = useState("output")
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,13 +86,13 @@ export default function ProfileForm() {
       select: 1,
       pix_fmt: "yuv420p",
       filetype: "mp4",
-      output: 'output',
+      output: output,
     },
   });
-  const [command, setCommand] = useState("");
-  const [timeRange, setTimeRange] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [videoSrc, setVideoSrc] = useState("")
+  useEffect(() => {
+    form.setValue("output", output);
+  }, [output, form]);
+
   const { toast } = useToast();
   const ffmpeg = useFFmpeg();
 
@@ -101,6 +107,7 @@ export default function ProfileForm() {
   const handleDropzoneChange = (files: File[]) => {
     setFiles(() => files)
     setVideoSrc(URL.createObjectURL(files[0]))
+    setOutput(sanitizeFilename(files[0].name).split('.')[0])
   }
   const handleTranscode = async (file: File, commandParts: CommandPartsType) => {
     if (!ffmpeg.isLoaded) {
@@ -123,7 +130,8 @@ export default function ProfileForm() {
     const { command, commandParts } = generateFFmpegCommand({
       ...values,
       timeRange,
-      input: sanitizeFilename(files[0].name)
+      input: sanitizeFilename(files[0].name),
+      output
     });
     setCommand(command);
     if (onlyGenerateCommand) return;
@@ -318,7 +326,7 @@ export default function ProfileForm() {
               <FormItem>
                 <FormLabel>文件名</FormLabel>
                 <FormControl>
-                  <Input type="text" placeholder="output" {...field} />
+                  <Input type="text" placeholder="output" {...field}/>
                 </FormControl>
                 <FormMessage />
 
