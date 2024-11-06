@@ -1,6 +1,47 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import BiteRateSelector from "@/components/bit-rate-selector";
+import ColorSpaceSelector from "@/components/color-space-selector";
+import Dropzone from "@/components/DropZone";
+import FileTypeSelector from "@/components/file-type-selector";
+import { HugeiconsLoading03, MingcuteCloseFill } from "@/components/icons";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
+import VideoClipper from "@/components/VideoClipper";
+import { useFFmpeg } from "@/lib/FFmpeg.wasm";
+import {
+  CommandPartsType,
+  generateFFmpegCommand,
+  get24HourTimeStringSuffix,
+  sanitizeFilename,
+} from "@/lib/utils";
+import {
+  ExclamationTriangleIcon,
+  QuestionMarkCircledIcon,
+} from "@radix-ui/react-icons";
+import { Separator } from "@radix-ui/react-separator";
+import { useEffect, useState } from "react";
+
 const formSchema = z.object({
   fps: z.coerce
     .number()
@@ -22,58 +63,30 @@ const formSchema = z.object({
       message: "压缩级别必须小于100.",
     })
     .gte(0, { message: "压缩级别必须大于0." }),
-  output: z.string()
+  output: z
+    .string()
     .min(1, { message: "文件名不能为空" })
     .max(50, { message: "文件名长度不能超过50个字符" })
     .regex(/^[a-zA-Z0-9_-]+$/, {
-      message: "文件名只能包含字母、数字、下划线和连字符"
+      message: "文件名只能包含字母、数字、下划线和连字符",
     })
-    .refine((name) => !name.startsWith('-'), {
-      message: "文件名不能以连字符开头"
+    .refine((name) => !name.startsWith("-"), {
+      message: "文件名不能以连字符开头",
     })
-    .refine((name) => !name.endsWith('-'), {
-      message: "文件名不能以连字符结尾"
+    .refine((name) => !name.endsWith("-"), {
+      message: "文件名不能以连字符结尾",
     }),
   select: z.coerce.number(),
   pix_fmt: z.string().optional(),
   filetype: z.string(),
 });
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import BiteRateSelector from "@/components/bit-rate-selector";
-import { Slider } from "@/components/ui/slider";
-import ColorSpaceSelector from "@/components/color-space-selector";
-import { CommandPartsType, generateFFmpegCommand, sanitizeFilename } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import FileTypeSelector from "@/components/file-type-selector";
-import Dropzone from "@/components/DropZone";
-import VideoClipper from "@/components/VideoClipper";
-import { Separator } from "@radix-ui/react-separator";
-import { useToast } from "@/components/ui/use-toast";
-import { useFFmpeg } from "@/lib/FFmpeg.wasm";
-import { HugeiconsLoading03, MingcuteCloseFill } from "@/components/icons";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExclamationTriangleIcon, QuestionMarkCircledIcon } from "@radix-ui/react-icons";
-import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 export default function ProfileForm() {
-
   const [command, setCommand] = useState("");
   const [timeRange, setTimeRange] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [videoSrc, setVideoSrc] = useState("")
-  const [output, setOutput] = useState("output")
+  const [videoSrc, setVideoSrc] = useState("");
+  const [output, setOutput] = useState("output");
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -105,21 +118,24 @@ export default function ProfileForm() {
   };
 
   const handleDropzoneChange = (files: File[]) => {
-    setFiles(() => files)
-    setVideoSrc(URL.createObjectURL(files[0]))
-    setOutput(sanitizeFilename(files[0].name).split('.')[0])
-  }
-  const handleTranscode = async (file: File, commandParts: CommandPartsType) => {
+    setFiles(() => files);
+    setVideoSrc(URL.createObjectURL(files[0]));
+    setOutput(sanitizeFilename(files[0].name).split(".")[0]);
+  };
+  const handleTranscode = async (
+    file: File,
+    commandParts: CommandPartsType
+  ) => {
     if (!ffmpeg.isLoaded) {
-      console.log('FFmpeg is not loaded yet');
+      console.log("FFmpeg is not loaded yet");
       return;
     }
 
     try {
       await ffmpeg.transcode(file, commandParts);
-      console.log('Transcoding completed');
+      console.log("Transcoding completed");
     } catch (error) {
-      console.error('Transcoding failed:', error);
+      console.error("Transcoding failed:", error);
     }
   };
 
@@ -131,7 +147,7 @@ export default function ProfileForm() {
       ...values,
       timeRange,
       input: sanitizeFilename(files[0].name),
-      output
+      output: values.output + get24HourTimeStringSuffix(),
     });
     setCommand(command);
     if (onlyGenerateCommand) return;
@@ -143,14 +159,16 @@ export default function ProfileForm() {
       });
       return;
     }
-    await handleTranscode(files[0], commandParts)
+    await handleTranscode(files[0], commandParts);
   }
 
   return (
     <>
       <div className="file mb-8">
         <Alert className="text-border my-4">
-          <AlertTitle className="text-border">建议在 FireFox 中使用，以开启多线程支持</AlertTitle>
+          <AlertTitle className="text-border">
+            建议在 FireFox 中使用，以开启多线程支持
+          </AlertTitle>
           <AlertDescription>
             It is recommended to use Firefox to enable multi-threading
           </AlertDescription>
@@ -281,7 +299,9 @@ export default function ProfileForm() {
                     className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
                   />
                 </FormControl>
-                <FormDescription>间隔抽取帧，合成结果，值越大，输出播放速度越快，文件越小</FormDescription>
+                <FormDescription>
+                  间隔抽取帧，合成结果，值越大，输出播放速度越快，文件越小
+                </FormDescription>
               </FormItem>
             )}
           />
@@ -318,7 +338,6 @@ export default function ProfileForm() {
             )}
           />
 
-
           <FormField
             control={form.control}
             name="output"
@@ -326,10 +345,9 @@ export default function ProfileForm() {
               <FormItem>
                 <FormLabel>文件名</FormLabel>
                 <FormControl>
-                  <Input type="text" placeholder="output" {...field}/>
+                  <Input type="text" placeholder="output" {...field} />
                 </FormControl>
                 <FormMessage />
-
               </FormItem>
             )}
           />
@@ -348,15 +366,29 @@ export default function ProfileForm() {
         className=""
         onClick={form.handleSubmit(() => onSubmit(form.getValues(), false))}
       >
-        生成指令并开始转换 {ffmpeg.isDoing && <HugeiconsLoading03 className="animate-spin ml-2 inline-block" />}
+        生成指令并开始转换{" "}
+        {ffmpeg.isDoing && (
+          <HugeiconsLoading03 className="animate-spin ml-2 inline-block" />
+        )}
       </Button>
 
+      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">
+        FFmpeg.wasm{" "}
+        {ffmpeg.isLoading ? (
+          <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div>
+        ) : (
+          <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>
+        )}
+      </span>
 
-
-      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">FFmpeg.wasm {ffmpeg.isLoading ? <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div> : <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}</span>
-
-      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">多线程支持 {!ffmpeg.openMT ? <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div> : <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>}
-        <TooltipProvider >
+      <span className="ml-4 text-gray-500 inline-flex items-center text-xs">
+        多线程支持{" "}
+        {!ffmpeg.openMT ? (
+          <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-yellow-500"></div>
+        ) : (
+          <div className="inline-block w-1.5 h-1.5 ml-2 rounded-full bg-green-500"></div>
+        )}
+        <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <QuestionMarkCircledIcon className="ml-2 hover:text-gray-300 cursor-pointer" />
@@ -366,48 +398,65 @@ export default function ProfileForm() {
                 多线程将会带来更快的处理速度
               </h2>
               <p>
-                本项目FFmpeg 核心使用的是 <a className="underline underline-offset-4 break-keep" target="_blank" href="https://ffmpegwasm.netlify.app/">FFmpeg.wasm</a>. 目前多线程似乎不支持基于 Chromium 的浏览器。 经测试，FireFox 可以很好的支持。 因此在 FireFox 浏览器中多线程能力是开启的。
+                本项目FFmpeg 核心使用的是{" "}
+                <a
+                  className="underline underline-offset-4 break-keep"
+                  target="_blank"
+                  href="https://ffmpegwasm.netlify.app/"
+                >
+                  FFmpeg.wasm
+                </a>
+                . 目前多线程似乎不支持基于 Chromium 的浏览器。 经测试，FireFox
+                可以很好的支持。 因此在 FireFox 浏览器中多线程能力是开启的。
               </p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </span>
 
-
       <div className="my-4 h-1 flex items-center gap-4">
-        {ffmpeg.progress !== 0 && <> <Progress value={ffmpeg.progress} className="my-4 mx-4 h-1" /> <span className="text-xs shrink-0 inline-block w-12 text-right">{Math.floor(ffmpeg.transcodedTime)} s</span></>}
+        {ffmpeg.progress !== 0 && (
+          <>
+            {" "}
+            <Progress value={ffmpeg.progress} className="my-4 mx-4 h-1" />{" "}
+            <span className="text-xs shrink-0 inline-block w-12 text-right">
+              {Math.floor(ffmpeg.transcodedTime)} s
+            </span>
+          </>
+        )}
       </div>
 
-      {ffmpeg.error &&
+      {ffmpeg.error && (
         <Alert className="my-4" variant="destructive">
           <ExclamationTriangleIcon className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {ffmpeg.error?.message}
-          </AlertDescription>
+          <AlertDescription>{ffmpeg.error?.message}</AlertDescription>
         </Alert>
-      }
+      )}
 
-      {
-        ffmpeg.logs.length !== 0 &&
+      {ffmpeg.logs.length !== 0 && (
         <Alert className="my-4">
           <AlertTitle>Logs</AlertTitle>
           <AlertDescription>
             {ffmpeg.logs.map((i, index) => {
-              return <pre key={index} className="mt-4 whitespace-normal">{i}</pre>
+              return (
+                <pre key={index} className="mt-4 whitespace-normal">
+                  {i}
+                </pre>
+              );
             })}
           </AlertDescription>
         </Alert>
-      }
+      )}
 
-      {
-        command && <Alert className="my-4">
+      {command && (
+        <Alert className="my-4">
           <AlertTitle>生成指令:</AlertTitle>
           <AlertDescription>
             <pre className="mt-4 whitespace-normal">{command}</pre>
           </AlertDescription>
         </Alert>
-      }
+      )}
 
       {/* 
       <Alert className="text-border my-4">
@@ -416,9 +465,6 @@ export default function ProfileForm() {
           Sorry that there is might no support for some browser like safari right now.
         </AlertDescription>
       </Alert> */}
-
-
-
     </>
   );
 }

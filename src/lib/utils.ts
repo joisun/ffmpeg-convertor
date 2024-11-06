@@ -129,3 +129,12 @@ export function sanitizeFilename(filename:string) {
   // 拼接合法文件名和扩展名
   return extension ? `${name}.${extension}` : name;
 }
+
+
+export function get24HourTimeStringSuffix() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0'); // 获取小时并补全至两位数
+  const minutes = String(now.getMinutes()).padStart(2, '0'); // 获取分钟并补全至两位数
+  const seconds = String(now.getSeconds()).padStart(2, '0'); // 获取秒并补全至两位数
+  return `_${hours}${minutes}${seconds}`; // 返回格式化后的时间字符串
+}
