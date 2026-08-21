@@ -24,9 +24,12 @@ export default function Header() {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-card px-3 sm:px-4">
       <div className="flex min-w-0 items-center gap-2.5" aria-label="FFmpeg Converter 视频工作台">
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-background shadow-[2px_2px_0_hsl(var(--primary))]">
-          <span className="font-mono text-xs font-bold">FF</span>
-        </span>
+        <img
+          src="/logo.svg"
+          alt=""
+          aria-hidden="true"
+          className="size-8 shrink-0 object-contain"
+        />
         <span className="truncate font-display text-sm font-semibold tracking-tight sm:text-base">
           FFmpeg Converter
         </span>
