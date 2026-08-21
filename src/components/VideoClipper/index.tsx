@@ -1,195 +1,200 @@
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
-import DragHandler, { HandlerEnum } from "./DragHandler";
-import { cn, secondsToTime, throttle } from "@/lib/utils";
 import {
-  IcRoundPause,
-  IcRoundPlayArrow,
-  MaterialSymbolsVolumeUp,
-} from "../icons";
+  Timeline,
+  type TimelineState,
+} from "@xzdarcy/react-timeline-editor";
+import "@xzdarcy/react-timeline-editor/dist/react-timeline-editor.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-interface VideoClipperProps extends React.HTMLAttributes<HTMLVideoElement> {
+const MIN_CLIP_DURATION = 0.1;
+
+interface TimelineActionData {
+  id: string;
+  start: number;
+  end: number;
+  effectId: string;
+  selected?: boolean;
+  flexible?: boolean;
+  movable?: boolean;
+  minStart?: number;
+  maxEnd?: number;
+}
+
+interface TimelineRowData {
+  id: string;
+  actions: TimelineActionData[];
+  classNames?: string[];
+}
+
+interface TimelineEffectData {
+  id: string;
+  name?: string;
+}
+
+function formatTimecode(value: number) {
+  const totalMilliseconds = Math.round(Math.max(0, value) * 1000);
+  const hours = Math.floor(totalMilliseconds / 3_600_000);
+  const minutes = Math.floor((totalMilliseconds % 3_600_000) / 60_000);
+  const seconds = Math.floor((totalMilliseconds % 60_000) / 1000);
+  const milliseconds = totalMilliseconds % 1000;
+
+  return `${[hours, minutes, seconds]
+    .map((part) => String(part).padStart(2, "0"))
+    .join(":")}.${String(milliseconds).padStart(3, "0")}`;
+}
+
+interface VideoClipperProps {
   src: string;
-  onClipChange: (startPoint: string, endPoint: string) => void;
+  onClipChange: (startPoint: string, duration: string) => void;
+  children?: React.ReactNode;
 }
 
 export default function VideoClipper({
+  src,
   onClipChange,
-  ...props
+  children,
 }: VideoClipperProps) {
-  const [play, setPlay] = useState(false);
-  const [range, setRange] = useState([0, 0]);
-  const [startPoint, setStartPoint] = useState("");// 时间 tag
-  const [endPoint, setEndPoint] = useState("");
-
-  // const [startTime, setStartTime] = useState(0);// 时间 tag
-  // const [endTime, setEndTime] = useState(0);
-  // xTimeRef 用于解决 useEffect 闭包陷阱
-  const startTimeRef = useRef(0);
-  const endTimeRef = useRef(0);
-  const setStartTime = (val: number)=>{startTimeRef.current = val}
-  const setEndTime = (val: number)=>{endTimeRef.current = val}
-
-  const [volumVisible, setVolumVisible] = useState(false);
-  const [duration, setDuration] = useState(0)
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const timelineRef = useRef<TimelineState | null>(null);
+  const [duration, setDuration] = useState(0);
+  const [start, setStart] = useState(0);
+  const [end, setEnd] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [editorData, setEditorData] = useState<TimelineRowData[]>([]);
+  const effects = useMemo<Record<string, TimelineEffectData>>(
+    () => ({ video: { id: "video", name: "视频片段" } }),
+    [],
+  );
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    setDuration(0);
+    setStart(0);
+    setEnd(0);
+    setCurrentTime(0);
+    setEditorData([]);
+  }, [src]);
 
-    // 初始化 时间 tag
-    const handleLoadedmetadata = () => {
-      const duration = video.duration
-      setStartPoint(secondsToTime(0))
-      setEndPoint(secondsToTime(duration))
-      setDuration(duration)
-      setStartTime(0)
-      setEndTime(duration)
+  useEffect(() => {
+    if (!duration || (start === 0 && Math.abs(end - duration) < MIN_CLIP_DURATION)) {
+      onClipChange("", "");
+      return;
     }
 
-    // 同步播放按钮
-    const handlePlay = () => setPlay(true);
-    const handlePause = () => setPlay(false);
-    // 自动循环播放， 让视频始终在指定范围内重复播放
-    const handleTimeupdate = ()=>{
-      // ! 注意：这里的回调触发频率是没有特别高的， 可能会导致听感的时间间隔和实际导出的参数设定有一秒左右的误差， 如果需要非常精确， 可以使用 requestAniamtion
-      if(videoRef.current && videoRef.current.currentTime > endTimeRef.current){
-        playAtFromRangeStart()
-      }
-    }
+    onClipChange(formatTimecode(start), formatTimecode(end - start));
+  }, [duration, end, onClipChange, start]);
 
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("loadedmetadata", handleLoadedmetadata)
-    video.addEventListener("timeupdate", handleTimeupdate)
-
- 
-
-    return () => {
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("loadedmetadata", handleLoadedmetadata)
-      video.removeEventListener("timeupdate", handleTimeupdate)
-
-
-    };
-  }, []);
-
-  // 初始化 range 条
-  const initRange = (isStart: boolean, e: number) => updateRange(isStart, e);
-  // 更新 range 条
-  const updateRange = (isStart: boolean, e: number) => {
-    const newRange = Array.from(range);
-    newRange[isStart ? 0 : 1] = e;
-    setRange(newRange);
-  };
-  const handleChange = (isStart: boolean, e: number, percentage: number) => {
-    updateRange(isStart, e);
-    const newTime = duration * percentage
-    const formatedTimeStr = secondsToTime(newTime);
-    
-    // xTimeRef 用于解决 useEffect 闭包陷阱
-    isStart ? startTimeRef.current = newTime : endTimeRef.current = newTime;
-    isStart ? setStartTime(newTime) : setEndTime(newTime);
-
-    isStart ? setStartPoint(formatedTimeStr) : setEndPoint(formatedTimeStr);
-
-
-
-    // 起始时刻 + 持续时间
-    const lastingTime = endTimeRef.current - startTimeRef.current
-    onClipChange(startPoint, secondsToTime(lastingTime));
-    throttledPlay();
+  const previewAt = (time: number) => {
+    const nextTime = Math.min(duration, Math.max(0, time));
+    if (videoRef.current) videoRef.current.currentTime = nextTime;
+    timelineRef.current?.setTime(nextTime);
+    setCurrentTime(nextTime);
   };
 
-  const handlePlay = function () {
-    play ? videoRef.current?.pause() : videoRef.current?.play();
-    setPlay(!play);
+  const updateSelection = (nextData: TimelineRowData[]) => {
+    const action = nextData[0]?.actions[0];
+    if (!action) return;
+    setEditorData(nextData);
+    setStart(action.start);
+    setEnd(action.end);
   };
-  const handleVolChange = (event: ChangeEvent) => {
-    const target = event.target as HTMLInputElement;
-    videoRef.current && (videoRef.current.volume = Number(target.value));
-  };
-
-  // 设定播放时间点并播放
-  const playAtFromRangeStart = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = startTimeRef.current;
-      videoRef.current.play();
-    }
-  };
-  const throttledPlay = throttle(playAtFromRangeStart, 100);
 
   return (
-    <div className="relative w-full max-w-[800px] mx-auto">
-      <video
-        onError={(e) => console.error("Video error:", e)}
-        onPlay={() => console.log("Video started playing")}
-        onPause={() => console.log("Video paused")}
-        ref={videoRef}
-        className="relative w-full"
-        {...props}
-      ></video>
-      <div className="absolute flex gap-4 px-4 justify-between items-center z-20 bottom-12 left-1/2 rounded-2xl  backdrop-blur-2xl  -translate-x-1/2 z-1000 controller h-14 w-11/12 bg-black/40">
-        <button
-          className="text-4xl"
-          onClick={handlePlay}
-        >
-          {play ? <IcRoundPause /> : <IcRoundPlayArrow />}
-        </button>
-        <div className="con-bar flex-1 bg-white/20 rounded-2xl backdrop-blur-3xl h-4 relative flex items-center transition-all">
-          <DragHandler
-            initRange={initRange}
-            onPositionChange={(e, p) => handleChange(true, e, p)}
-            type={HandlerEnum.START}
-          >
-            {startPoint}
-          </DragHandler>
-          <DragHandler
-            initRange={initRange}
-            onPositionChange={(e, p) => handleChange(false, e, p)}
-            type={HandlerEnum.END}
-          >
-            {endPoint}
-          </DragHandler>
-          <div
-            className="range-bar absolute z-10 bg-green-500/80 h-full"
-            style={{ left: range[0], right: `calc(100% - ${range[1]}px)` }}
-          ></div>
-        </div>
-        <button
-          className="text-3xl "
-          onClick={() => setVolumVisible(!volumVisible)}
-        >
-          <MaterialSymbolsVolumeUp />
-        </button>
-        {volumVisible && (
-          <input
-            onChange={(e) => handleVolChange(e)}
-            className={cn(
-              "absolute -right-14 -top-0 -rotate-90 transition-all w-20 ",
-              "appearance-none bg-transparent",
-              "[&::-webkit-slider-runnable-track]:rounded-full",
-              " [&::-webkit-slider-runnable-track]:bg-black/80",
-              " [&::-webkit-slider-runnable-track]:backdrop-blur-2xl",
-              "[&::-webkit-slider-thumb]:appearance-none ",
-              "[&::-webkit-slider-thumb]:h-4 ",
-              "[&::-webkit-slider-thumb]:w-4 ",
-              "[&::-webkit-slider-thumb]:rounded-full ",
-              "[&::-webkit-slider-thumb]:bg-white"
-            )}
-            type="range"
-            id="volumeSlider"
-            min="0"
-            max="1"
-            step="0.01"
-          ></input>
-        )}
+    <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_7.5rem] overflow-hidden rounded-lg border bg-card shadow-sm">
+      <div className="relative flex min-h-0 items-center justify-center overflow-hidden bg-black">
+        <video
+          ref={videoRef}
+          src={src}
+          controls
+          playsInline
+          preload="metadata"
+          className="h-full w-full object-contain"
+          onLoadedMetadata={(event) => {
+            const nextDuration = Number.isFinite(event.currentTarget.duration)
+              ? event.currentTarget.duration
+              : 0;
+            setDuration(nextDuration);
+            setStart(0);
+            setEnd(nextDuration);
+            setEditorData([
+              {
+                id: "video-track",
+                classNames: ["media-timeline-row"],
+                actions: [
+                  {
+                    id: "source-video",
+                    effectId: "video",
+                    start: 0,
+                    end: nextDuration,
+                    flexible: true,
+                    movable: true,
+                    minStart: 0,
+                    maxEnd: nextDuration,
+                    selected: true,
+                  },
+                ],
+              },
+            ]);
+          }}
+          onTimeUpdate={(event) => {
+            const time = event.currentTarget.currentTime;
+            timelineRef.current?.setTime(time);
+            setCurrentTime(time);
+          }}
+        />
+        {children}
+        <output className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/70 px-2 py-1 font-mono text-[10px] text-white/80 backdrop-blur">
+          {formatTimecode(currentTime)} / {formatTimecode(duration)}
+        </output>
       </div>
-      {props.children}
+
+      <section className="media-timeline min-w-0 border-t bg-card" aria-label="视频剪辑时间线">
+        <div className="flex h-7 items-center justify-between border-b px-3 text-[10px]">
+          <span className="font-semibold uppercase tracking-wider text-muted-foreground">Timeline</span>
+          <output className="font-mono text-primary">
+            IN {formatTimecode(start)} · OUT {formatTimecode(end)} · {formatTimecode(end - start)}
+          </output>
+        </div>
+        {duration > 0 ? (
+          <Timeline
+            ref={timelineRef}
+            editorData={editorData}
+            effects={effects}
+            scale={1}
+            scaleSplitCount={10}
+            scaleWidth={88}
+            minScaleCount={Math.max(5, Math.ceil(duration))}
+            maxScaleCount={Math.max(5, Math.ceil(duration))}
+            startLeft={12}
+            rowHeight={46}
+            gridSnap
+            dragLine
+            autoScroll
+            onChange={updateSelection}
+            onActionMoving={({ start: nextStart }) => previewAt(nextStart)}
+            onActionResizing={({ start: nextStart, end: nextEnd, dir }) => {
+              if (nextStart < 0 || nextEnd > duration || nextEnd - nextStart < MIN_CLIP_DURATION) {
+                return false;
+              }
+              previewAt(dir === "left" ? nextStart : nextEnd);
+            }}
+            onCursorDrag={previewAt}
+            onClickTimeArea={(time) => {
+              previewAt(time);
+              return true;
+            }}
+            getActionRender={() => (
+              <div className="flex h-full min-w-0 items-center gap-2 px-3">
+                <span className="size-1.5 shrink-0 rounded-full bg-current" />
+                <span className="truncate font-mono text-[10px] font-semibold uppercase tracking-wider">
+                  Video
+                </span>
+              </div>
+            )}
+            style={{ width: "100%", height: 92 }}
+          />
+        ) : (
+          <div className="m-3 h-12 animate-pulse rounded bg-muted" aria-label="正在读取视频时长" />
+        )}
+      </section>
     </div>
   );
 }
-
-
-

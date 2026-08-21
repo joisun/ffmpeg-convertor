@@ -1,10 +1,21 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: fileURLToPath(new URL('./node_modules/@ffmpeg/core/dist/esm/*', import.meta.url)),
+          dest: 'ffmpeg-core/st',
+        },
+      ],
+    }),
+  ],
   base: './',
   resolve: {
     alias: {
@@ -12,10 +23,4 @@ export default defineConfig({
     }
   },
   optimizeDeps: { exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"], },
-  server: {
-    headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-    },
-  }
 })

@@ -11,6 +11,7 @@ dist
 node_modules
 dist-ssr
 *.local
+/.vdr-log/
 
 # Editor directories and files
 .vscode/*
