@@ -10,47 +10,82 @@ import {
 
 interface BiteRateSelectorProps extends React.HTMLAttributes<HTMLElement> {
   onValueChange: (value: string) => void;
-  defaultValue?: string;
+  value?: string;
+  allowedValues?: readonly string[];
+  disabled?: boolean;
 }
 
+const groups = [
+  {
+    label: "自动",
+    options: [{ value: "none", label: "保持源文件设置" }],
+  },
+  {
+    label: "单调",
+    options: [
+      { value: "gray", label: "gray - 灰度图像" },
+      { value: "monob", label: "monob - 单色二值图像" },
+      { value: "pal8", label: "pal8 - 8位调色板" },
+    ],
+  },
+  {
+    label: "RGB / RGBA",
+    options: [
+      { value: "rgb8", label: "rgb8" },
+      { value: "rgb24", label: "rgb24" },
+      { value: "rgb32", label: "rgb32" },
+      { value: "rgb48be", label: "rgb48be - 48位 RGB 格式(大端)" },
+      { value: "rgb48le", label: "rgb48le - 48位 RGB 格式(小端)" },
+      { value: "rgba", label: "rgba" },
+      { value: "bgra", label: "bgra" },
+    ],
+  },
+  {
+    label: "YUV",
+    options: [
+      { value: "nv12", label: "nv12" },
+      { value: "nv21", label: "nv21" },
+      { value: "yuv420p", label: "yuv420p" },
+      { value: "yuv422p", label: "yuv422p" },
+      { value: "yuv444p", label: "yuv444p" },
+    ],
+  },
+] as const;
+
 export default function ColorSpaceSelector({
-  defaultValue,
+  value,
   onValueChange,
+  allowedValues,
+  disabled,
 }: BiteRateSelectorProps) {
+  const allowed = new Set(
+    allowedValues?.length === 0
+      ? ["none"]
+      : (allowedValues ?? groups.flatMap((group) => group.options.map((option) => option.value))),
+  );
+  const visibleGroups = groups
+    .map((group) => ({
+      ...group,
+      options: group.options.filter((option) => allowed.has(option.value)),
+    }))
+    .filter((group) => group.options.length > 0);
+
   return (
-    <Select defaultValue={defaultValue} onValueChange={onValueChange}>
+    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger>
         <SelectValue placeholder="选择颜色空间" />
       </SelectTrigger>
       <SelectContent>
-          <SelectItem value=" "> 无选择</SelectItem>
-        <SelectGroup>
-          <SelectLabel className="text-border">单调</SelectLabel>
-          <SelectItem value="gray"> gray - 灰度图像</SelectItem>
-          <SelectItem value="monob"> monob - 单色二值图像</SelectItem>
-          <SelectItem value="pal8"> pal8 - 8位调色板</SelectItem>
-        </SelectGroup>
-        <SelectGroup>
-          <SelectLabel className="text-border">RGB</SelectLabel>
-          <SelectItem value="rgb8"> rgb8</SelectItem>
-          <SelectItem value="rgb24"> rgb24</SelectItem>
-          <SelectItem value="rgb32"> rgb32</SelectItem>
-          <SelectItem value="rgb48be">rgb48be - 48位 RGB 格式(大端)</SelectItem>
-          <SelectItem value="rgb48le">rgb48le - 48位 RGB 格式(小端)</SelectItem>
-        </SelectGroup>
-        <SelectGroup>
-          <SelectLabel className="text-border">RGBA</SelectLabel>
-          <SelectItem value="rgba"> rgba</SelectItem>
-          <SelectItem value="bgra"> bgra</SelectItem>
-        </SelectGroup>
-        <SelectGroup>
-          <SelectLabel className="text-border">YUV</SelectLabel>
-          <SelectItem value="nv12"> nv12 </SelectItem>
-          <SelectItem value="nv21">nv21</SelectItem>
-          <SelectItem value="yuv420p"> yuv420p</SelectItem>
-          <SelectItem value="yuv422p"> yuv422p</SelectItem>
-          <SelectItem value="yuv444p"> yuv444p</SelectItem>
-        </SelectGroup>
+        {visibleGroups.map((group) => (
+          <SelectGroup key={group.label}>
+            <SelectLabel>{group.label}</SelectLabel>
+            {group.options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
       </SelectContent>
     </Select>
   );

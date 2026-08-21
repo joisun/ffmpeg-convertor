@@ -1,23 +1,22 @@
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 
 interface BiteRateSelectorProps extends React.HTMLAttributes<HTMLElement> {
   onValueChange: (value: string)=>void
-  defaultValue: string
+  value: string
+  disabled?: boolean
 }
 
-export default function BiteRateSelector({defaultValue,onValueChange}: BiteRateSelectorProps) {
+export default function BiteRateSelector({value,onValueChange,disabled}: BiteRateSelectorProps) {
   return (
-    <Select defaultValue={defaultValue} onValueChange={onValueChange}>
+    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger >
-        <SelectValue placeholder="" />
+        <SelectValue placeholder="选择比特率">{value}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="100k"> 100k - 非常低质量，适用于极小的文件大小需求或非常低分辨率的视频</SelectItem>
